@@ -1,0 +1,12 @@
+#!/bin/bash
+
+IFS=- read mc_version jre_version <<< $SOURCE_BRANCH
+
+travertine_version=$(curl -L https://papermc.io/api/v1/travertine/$mc_version/latest | sed -E -e 's/^.*"build":"([0-9]+)".*$/\1/')
+
+docker build --build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+             --build-arg VCS_REF=`git rev-parse --short HEAD` \
+             --build-arg TRAVERTINE_VERSION="$travertine_version" \
+             --build-arg MC_VERSION="$mc_version" \
+             --build-arg JRE_VERSION="$jre_version" \
+             -t $IMAGE_NAME .

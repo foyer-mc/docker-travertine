@@ -1,0 +1,20 @@
+#!/bin/bash
+IFS=- read mc_version jre_version <<< $SOURCE_BRANCH
+travertine_version=$(docker inspect -f '{{ index .Config.Labels "cool.foyer.travertine.version" }}' $IMAGE_NAME)
+
+push() {
+    docker tag $IMAGE_NAME $DOCKER_REPO:$1
+    docker push $DOCKER_REPO:$1
+}
+
+push $mc_version-$jre_version-$travertine_version
+push $mc_version
+
+git remote set-branches origin '*'
+git fetch
+
+latest=$(git for-each-ref --format '%(refname)' --sort=-refname 'refs/remotes/origin/*' | cut -d/ -f4- | grep -E '^[0-9]+' | head -n1)
+
+if [ "$SOURCE_BRANCH" = "$latest" ]; then
+	push latest
+fi
